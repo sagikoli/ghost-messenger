@@ -79,7 +79,7 @@
         }
     </style>
 </head>
-<body class="text-gray-100 flex items-center justify-center">
+<body class="flex items-center justify-center">
 
     <!-- React Root Mount Node -->
     <div id="root" class="w-full h-full max-w-md md:rounded-2xl md:shadow-2xl md:h-[90vh] md:max-h-[850px] relative overflow-hidden flex flex-col"></div>
@@ -200,6 +200,7 @@
                 name: "Midnight Orchid",
                 bg: "bg-gradient-to-b from-[#130b2b] to-[#0a0517]",
                 border: "md:border-purple-950/50",
+                textColor: "text-gray-100",
                 textAccent: "text-brand-500",
                 accentBg: "bg-brand-600 hover:bg-brand-700 shadow-brand-600/30",
                 messageSelfBg: "bg-gradient-to-tr from-brand-600 to-violet-600",
@@ -213,6 +214,7 @@
                 name: "Cyberpunk Lime",
                 bg: "bg-gradient-to-b from-[#0c0f0a] to-[#020302]",
                 border: "md:border-lime-950/50",
+                textColor: "text-gray-100",
                 textAccent: "text-lime-500",
                 accentBg: "bg-lime-600 hover:bg-lime-700 shadow-lime-600/30",
                 messageSelfBg: "bg-gradient-to-tr from-lime-600 to-emerald-700",
@@ -226,6 +228,7 @@
                 name: "Ghost Obsidian",
                 bg: "bg-gradient-to-b from-[#121212] to-[#080808]",
                 border: "md:border-zinc-800/50",
+                textColor: "text-gray-100",
                 textAccent: "text-zinc-400",
                 accentBg: "bg-zinc-700 hover:bg-zinc-600 shadow-zinc-700/30",
                 messageSelfBg: "bg-gradient-to-tr from-zinc-700 to-zinc-500",
@@ -239,6 +242,7 @@
                 name: "Deep Ocean",
                 bg: "bg-gradient-to-b from-[#081526] to-[#040a14]",
                 border: "md:border-sky-950/50",
+                textColor: "text-gray-100",
                 textAccent: "text-sky-500",
                 accentBg: "bg-sky-600 hover:bg-sky-700 shadow-sky-600/30",
                 messageSelfBg: "bg-gradient-to-tr from-sky-600 to-blue-600",
@@ -247,8 +251,42 @@
                 inputBg: "bg-[#0d1d30] border border-sky-900/40 focus:ring-sky-500",
                 headerBg: "bg-[#06101d]/80",
                 headerBorder: "border-sky-950/40"
+            },
+            paper: {
+                name: "Paper White",
+                bg: "bg-gradient-to-b from-[#f7f7f5] to-[#e9e8e4]",
+                border: "md:border-slate-300/60",
+                textColor: "text-slate-900",
+                textAccent: "text-slate-700",
+                accentBg: "bg-slate-900 hover:bg-slate-800 shadow-slate-900/20",
+                messageSelfBg: "bg-slate-900 text-white",
+                messageOtherBg: "bg-white border border-slate-200/80",
+                cardBg: "bg-white/90 border border-slate-200/80",
+                inputBg: "bg-white border border-slate-300 focus:ring-slate-500",
+                headerBg: "bg-white/85",
+                headerBorder: "border-slate-300/70",
+                isLight: true
+            },
+            cloud: {
+                name: "Morning Cloud",
+                bg: "bg-gradient-to-b from-[#eef2ff] to-[#f8fafc]",
+                border: "md:border-sky-200/80",
+                textColor: "text-slate-900",
+                textAccent: "text-sky-700",
+                accentBg: "bg-sky-600 hover:bg-sky-700 shadow-sky-600/20",
+                messageSelfBg: "bg-sky-600 text-white",
+                messageOtherBg: "bg-white border border-sky-200/80",
+                cardBg: "bg-white/90 border border-sky-200/80",
+                inputBg: "bg-white border border-sky-300 focus:ring-sky-500",
+                headerBg: "bg-white/80",
+                headerBorder: "border-sky-200/70",
+                isLight: true
             }
         };
+
+        const TENOR_API_KEY = "LIVDSRZULELA";
+        const GIPHY_API_KEY = "dc6zaTOxFJmzC";
+        const GIF_FETCH_LIMIT = 12;
 
         // =========================================================================
         // MAIN REACT COMPONENT
@@ -257,11 +295,20 @@
             // App Navigation / Room Setup States
             const [roomID, setRoomID] = useState("");
             const [cryptoKey, setCryptoKey] = useState(null);
-            const [username, setUsername] = useState("");
+            const [username, setUsername] = useState(() => localStorage.getItem("GHOST_USERNAME") || "");
             const [isCreated, setIsCreated] = useState(false);
-            const [myUserId] = useState(() => Math.random().toString(36).substring(2, 9));
+            const [myUserId] = useState(() => {
+                const savedUserId = localStorage.getItem("GHOST_USER_ID");
+                if (savedUserId) return savedUserId;
+                const newUserId = Math.random().toString(36).substring(2, 9);
+                localStorage.setItem("GHOST_USER_ID", newUserId);
+                return newUserId;
+            });
             const [inviteLink, setInviteLink] = useState("");
             const [isJoiningWithLink, setIsJoiningWithLink] = useState(false);
+            const [joinError, setJoinError] = useState("");
+            const [activeParticipants, setActiveParticipants] = useState(1);
+            const [participantsLocked, setParticipantsLocked] = useState(false);
             
             // Connection & Config States
             const [firebaseConfig, setFirebaseConfig] = useState(() => {
@@ -269,17 +316,17 @@
                 return saved ? JSON.parse(saved) : null;
             });
 
-            // Fallback starting mode: automatic Cloud if firebase is configured
-            const [connectionMode, setConnectionMode] = useState(() => {
-                const saved = localStorage.getItem("GHOST_FIREBASE_CONFIG");
-                return saved ? "firebase" : "demo";
-            });
-
             const [showSettings, setShowSettings] = useState(false);
             
             // Live Chat States
             const [messages, setMessages] = useState([]);
+            const [archivedMessages, setArchivedMessages] = useState([]);
             const [inputText, setInputText] = useState("");
+            const [showGifPicker, setShowGifPicker] = useState(false);
+            const [gifSearchTerm, setGifSearchTerm] = useState("");
+            const [gifResults, setGifResults] = useState([]);
+            const [gifLoading, setGifLoading] = useState(false);
+            const [gifProvider, setGifProvider] = useState("tenor");
             
             // Default self-destruct 30 minutes, or load customized storage preference
             const [selfDestructMinutes, setSelfDestructMinutes] = useState(() => {
@@ -287,29 +334,34 @@
                 return saved ? Number(saved) : 30;
             });
 
-            const [soundEnabled, setSoundEnabled] = useState(true);
-            const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+            const [soundEnabled, setSoundEnabled] = useState(() => {
+                const saved = localStorage.getItem("GHOST_SOUND_ENABLED");
+                return saved === null ? true : saved === "true";
+            });
             const [copied, setCopied] = useState(false);
             const [expiringList, setExpiringList] = useState({});
 
-            // Themes configuration
             const [themeKey, setThemeKey] = useState(() => {
                 const saved = localStorage.getItem("GHOST_THEME");
                 return (saved && THEMES[saved]) ? saved : "orchid";
             });
             const currentTheme = THEMES[themeKey];
 
+            const messagesContainerRef = useRef(null);
+            const messagesEndRef = useRef(null);
+            const firebaseUnsubscribeRef = useRef(null);
+            const isNearBottomRef = useRef(true);
+
+            const MAX_RENDERED_MESSAGES = 50;
+            const ARCHIVE_BATCH_SIZE = 20;
+            const LAZY_LOAD_THRESHOLD_PX = 180;
+            const AUTO_SCROLL_THRESHOLD_PX = 120;
+            const PARTICIPANT_HEARTBEAT_INTERVAL_MS = 10000;
+            const PARTICIPANT_STALE_TIMEOUT_MS = 30000;
+
             // UI System State
             const [inputApiKey, setInputApiKey] = useState("");
             const [inputProjectId, setInputProjectId] = useState("");
-
-            // Refs
-            const messagesEndRef = useRef(null);
-            const broadcastChannelRef = useRef(null);
-            const firebaseUnsubscribeRef = useRef(null);
-
-            // Quick emoji collection
-            const popularEmojis = ["😂", "👍", "🔥", "❤️", "😍", "🙌", "🎉", "😢", "😮", "🤔", "👀", "🤐", "👻"];
 
             // -------------------------------------------------------------------------
             // Initial Mount: Parse URL for existing Room & Key
@@ -323,10 +375,24 @@
                     const keyString = urlHash.substring(5);
                     setRoomID(urlRoomId);
                     setIsJoiningWithLink(true);
-                    importKeyFromBase64(keyString).then(key => {
+                    importKeyFromBase64(keyString).then(async key => {
                         setCryptoKey(key);
                         setInviteLink(window.location.href);
+
+                        const savedUsername = localStorage.getItem("GHOST_USERNAME");
+                        if (savedUsername) {
+                            setUsername(savedUsername);
+                            const joined = await verifyRoomJoin(urlRoomId, savedUsername);
+                            if (joined) {
+                                setIsCreated(true);
+                            }
+                        }
                     });
+                } else {
+                    const savedUsername = localStorage.getItem("GHOST_USERNAME");
+                    if (savedUsername) {
+                        setUsername(savedUsername);
+                    }
                 }
             }, []);
 
@@ -337,48 +403,28 @@
                 if (!isCreated || !roomID || !cryptoKey) return;
 
                 // Cleanup previous active listener
-                if (broadcastChannelRef.current) broadcastChannelRef.current.close();
                 if (firebaseUnsubscribeRef.current) firebaseUnsubscribeRef.current();
 
-                if (connectionMode === "demo") {
-                    // DEMO MODE: syncs between tabs in same browser
-                    const channel = new BroadcastChannel(`room-${roomID}`);
-                    broadcastChannelRef.current = channel;
-                    
-                    channel.onmessage = async (event) => {
-                        const { encrypted, senderId, senderName, createdAt, expiresAt } = event.data;
-                        const decryptedText = await decryptText(encrypted.ciphertext, encrypted.iv, cryptoKey);
-                        
-                        const newMsg = {
-                            id: Math.random().toString(36).substring(2, 9),
-                            content: decryptedText,
-                            senderId,
-                            senderName,
-                            createdAt: createdAt || Date.now(),
-                            expiresAt: expiresAt || (Date.now() + selfDestructMinutes * 60000)
-                        };
+                // Refs to manage server-side lazy-loading state
+                const earliestMessageRef = { current: null };
+                const hasMoreOlderRef = { current: false };
+                const loadingOlderRef = { current: false };
+                const initialLoadRef = { current: true };
 
-                        setMessages(prev => {
-                            if (prev.some(m => m.id === newMsg.id)) return prev;
-                            return [...prev, newMsg];
-                        });
-
-                        if (senderId !== myUserId && soundEnabled) {
-                            playNotificationSound();
-                        }
-                    };
-                } else if (connectionMode === "firebase" && firebaseConfig) {
+                if (firebaseConfig) {
                     // FIREBASE MODE: Full internet real-time communication
                     try {
                         if (!firebase.apps.length) {
                             firebase.initializeApp(firebaseConfig);
                         }
                         const db = firebase.firestore();
-                        
+
+                        // Listen only for the latest N messages to keep initial load small
                         const unsubscribe = db.collection("rooms")
                             .doc(roomID)
                             .collection("messages")
                             .orderBy("createdAt", "asc")
+                            .limitToLast(MAX_RENDERED_MESSAGES)
                             .onSnapshot(async (snapshot) => {
                                 const fetchedMsgs = [];
                                 for (const doc of snapshot.docs) {
@@ -399,37 +445,208 @@
                                     });
                                 }
 
-                                setMessages(prev => {
-                                    if (fetchedMsgs.length > prev.length) {
-                                        const lastMsg = fetchedMsgs[fetchedMsgs.length - 1];
-                                        if (lastMsg && lastMsg.senderId !== myUserId && soundEnabled) {
-                                            playNotificationSound();
-                                        }
+                                if (fetchedMsgs.length > 0) {
+                                    const lastMsg = fetchedMsgs[fetchedMsgs.length - 1];
+                                    if (lastMsg && lastMsg.senderId !== myUserId && soundEnabled) {
+                                        playNotificationSound();
                                     }
-                                    return fetchedMsgs;
-                                });
+                                }
+
+                                // Visible messages are already limited by the query.
+                                setArchivedMessages([]);
+                                setMessages(fetchedMsgs);
+
+                                // Track earliest visible message timestamp for server-side pagination
+                                earliestMessageRef.current = fetchedMsgs[0]?.createdAt || null;
+
+                                // Determine whether there are older messages on the server
+                                if (earliestMessageRef.current) {
+                                    const earliestTs = firebase.firestore.Timestamp.fromMillis(earliestMessageRef.current);
+                                    db.collection("rooms").doc(roomID).collection("messages")
+                                        .orderBy("createdAt", "asc")
+                                        .endBefore(earliestTs)
+                                        .limit(1)
+                                        .get()
+                                        .then(checkSnap => {
+                                            hasMoreOlderRef.current = (checkSnap && checkSnap.size > 0);
+                                        })
+                                        .catch(() => { hasMoreOlderRef.current = false; });
+                                } else {
+                                    hasMoreOlderRef.current = false;
+                                }
+
+                                // On initial load, ensure scroll moves to latest message immediately
+                                if (initialLoadRef.current) {
+                                    initialLoadRef.current = false;
+                                    window.requestAnimationFrame(() => {
+                                        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+                                    });
+                                }
                             }, (error) => {
                                 console.error("Firestore Listen Error: ", error);
                             });
 
                         firebaseUnsubscribeRef.current = unsubscribe;
+
+                        // Attach a scroll handler wrapper that can fetch older batches from server
+                        const originalHandleChatScroll = handleChatScroll;
+                        const wrappedHandleChatScroll = async () => {
+                            const container = messagesContainerRef.current;
+                            if (!container) return;
+
+                            const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+                            isNearBottomRef.current = distanceFromBottom < AUTO_SCROLL_THRESHOLD_PX;
+
+                            // If we already have archived messages, use the existing client-side logic
+                            if (archivedMessages.length > 0) {
+                                return originalHandleChatScroll();
+                            }
+
+                            // If no archived messages cached but server has older docs, fetch next batch
+                            if (!loadingOlderRef.current && hasMoreOlderRef.current && earliestMessageRef.current) {
+                                loadingOlderRef.current = true;
+                                const previousHeight = container.scrollHeight;
+                                const previousScrollTop = container.scrollTop;
+
+                                try {
+                                    const earliestTs = firebase.firestore.Timestamp.fromMillis(earliestMessageRef.current);
+                                    const olderSnap = await db.collection("rooms").doc(roomID).collection("messages")
+                                        .orderBy("createdAt", "asc")
+                                        .endBefore(earliestTs)
+                                        .limitToLast(ARCHIVE_BATCH_SIZE)
+                                        .get();
+
+                                    const olderBatch = [];
+                                    for (const doc of olderSnap.docs) {
+                                        const data = doc.data();
+                                        if (data.expiresAt && data.expiresAt < Date.now()) continue;
+                                        const decryptedText = await decryptText(data.ciphertext, data.iv, cryptoKey);
+                                        olderBatch.push({
+                                            id: doc.id,
+                                            content: decryptedText,
+                                            senderId: data.senderId,
+                                            senderName: data.senderName,
+                                            createdAt: data.createdAt?.seconds ? data.createdAt.seconds * 1000 : Date.now(),
+                                            expiresAt: data.expiresAt
+                                        });
+                                    }
+
+                                    if (olderBatch.length > 0) {
+                                        // prepend olderBatch to visible messages
+                                        setMessages(prev => [...olderBatch, ...prev]);
+                                        earliestMessageRef.current = olderBatch[0].createdAt;
+                                    }
+
+                                    // If fewer than the batch size were returned, there are no more older messages
+                                    if (!olderSnap || olderSnap.size < ARCHIVE_BATCH_SIZE) {
+                                        hasMoreOlderRef.current = false;
+                                    }
+
+                                    // Restore scroll position to maintain viewport
+                                    window.requestAnimationFrame(() => {
+                                        if (!container) return;
+                                        container.scrollTop = container.scrollHeight - previousHeight + previousScrollTop;
+                                    });
+                                } catch (err) {
+                                    console.error("Error fetching older messages:", err);
+                                } finally {
+                                    loadingOlderRef.current = false;
+                                }
+                            }
+                        };
+
+                        // Replace the handler reference used in the DOM listener
+                        messagesContainerRef.current?.addEventListener('scroll', wrappedHandleChatScroll);
+
+                        // Cleanup: remove listener and restore state when effect is torn down
+                        const cleanup = () => {
+                            if (firebaseUnsubscribeRef.current) firebaseUnsubscribeRef.current();
+                            messagesContainerRef.current?.removeEventListener('scroll', wrappedHandleChatScroll);
+                        };
+
+                        // store cleanup function on ref so outer return can call it
+                        firebaseUnsubscribeRef.current = () => { unsubscribe(); cleanup(); };
                     } catch (e) {
                         console.error("Firebase startup crashed: ", e);
-                        setConnectionMode("demo");
                     }
                 }
 
                 return () => {
-                    if (broadcastChannelRef.current) broadcastChannelRef.current.close();
                     if (firebaseUnsubscribeRef.current) firebaseUnsubscribeRef.current();
                 };
-            }, [isCreated, roomID, cryptoKey, connectionMode, firebaseConfig]);
+            }, [isCreated, roomID, cryptoKey, firebaseConfig, soundEnabled]);
+
+            useEffect(() => {
+                if (!isCreated || !roomID || !firebaseConfig) return;
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                const db = firebase.firestore();
+                const roomRef = db.collection("rooms").doc(roomID);
+
+                const refreshPresence = async () => {
+                    try {
+                        await roomRef.set({
+                            participants: {
+                                [myUserId]: {
+                                    name: username.trim() || "Guest",
+                                    lastSeen: Date.now()
+                                }
+                            }
+                        }, { merge: true });
+                    } catch (err) {
+                        console.error("Presence heartbeat error:", err);
+                    }
+                };
+
+                const cleanupPresence = async () => {
+                    try {
+                        await roomRef.update({
+                            [`participants.${myUserId}`]: firebase.firestore.FieldValue.delete()
+                        });
+                    } catch (err) {
+                        // Ignore if room has been deleted or network is unavailable
+                    }
+                };
+
+                const heartbeat = setInterval(refreshPresence, PARTICIPANT_HEARTBEAT_INTERVAL_MS);
+                refreshPresence();
+
+                const unsubscribeRoomDoc = roomRef.onSnapshot((doc) => {
+                    const participants = doc.exists ? doc.data().participants || {} : {};
+                    const activeIds = getActiveParticipantIds(participants);
+                    setActiveParticipants(activeIds.length);
+
+                    const roomData = doc.exists ? doc.data() : {};
+                    const allowedIds = Array.isArray(roomData.allowedParticipantIds) ? roomData.allowedParticipantIds : [];
+                    setParticipantsLocked(allowedIds.length >= 2);
+                }, (error) => {
+                    console.error("Room presence listen failed:", error);
+                });
+
+                const handleUnload = () => {
+                    cleanupPresence();
+                };
+
+                window.addEventListener("pagehide", handleUnload);
+                window.addEventListener("beforeunload", handleUnload);
+
+                return () => {
+                    clearInterval(heartbeat);
+                    if (typeof unsubscribeRoomDoc === "function") unsubscribeRoomDoc();
+                    window.removeEventListener("pagehide", handleUnload);
+                    window.removeEventListener("beforeunload", handleUnload);
+                    cleanupPresence();
+                };
+            }, [isCreated, roomID, firebaseConfig, username, myUserId]);
 
             // -------------------------------------------------------------------------
             // Auto-scroll on new message
             // -------------------------------------------------------------------------
             useEffect(() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                if (isNearBottomRef.current) {
+                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }
             }, [messages]);
 
             // -------------------------------------------------------------------------
@@ -445,7 +662,7 @@
                         const remainingMs = msg.expiresAt - now;
                         if (remainingMs <= 0) {
                             stateChanged = true;
-                            if (connectionMode === "firebase" && firebaseConfig) {
+                            if (firebaseConfig) {
                                 firebase.firestore().collection("rooms").doc(roomID).collection("messages").doc(msg.id).delete();
                             }
                         } else {
@@ -460,11 +677,12 @@
 
                     if (stateChanged) {
                         setMessages(prev => prev.filter(msg => msg.expiresAt > now));
+                        setArchivedMessages(prev => prev.filter(msg => msg.expiresAt > now));
                     }
                 }, 1000);
 
                 return () => clearInterval(interval);
-            }, [messages, connectionMode, firebaseConfig]);
+            }, [messages, firebaseConfig]);
 
             // -------------------------------------------------------------------------
             // Setup Lifetime Preference Updates
@@ -474,6 +692,195 @@
                 localStorage.setItem("GHOST_LIFETIME", newVal.toString());
             };
 
+            const initializeFirestore = () => {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                return firebase.firestore();
+            };
+
+            const getActiveParticipantIds = (participants = {}) => {
+                const now = Date.now();
+                return Object.entries(participants)
+                    .filter(([_, record]) => record?.lastSeen && (now - record.lastSeen) < PARTICIPANT_STALE_TIMEOUT_MS)
+                    .map(([id]) => id);
+            };
+
+            const verifyRoomJoin = async (roomId, displayName) => {
+                if (!firebaseConfig) {
+                    return true;
+                }
+
+                try {
+                    const db = initializeFirestore();
+                    const roomRef = db.collection("rooms").doc(roomId);
+                    const snapshot = await roomRef.get();
+                    const roomData = snapshot.exists ? snapshot.data() : {};
+                    const participants = roomData.participants || {};
+                    const activeIds = getActiveParticipantIds(participants);
+                    const ownerId = roomData.ownerId || null;
+                    const allowedIds = Array.isArray(roomData.allowedParticipantIds) ? [...roomData.allowedParticipantIds] : (ownerId ? [ownerId] : []);
+                    const isOwner = ownerId === myUserId;
+                    const isAllowed = allowedIds.includes(myUserId);
+
+                    if (isAllowed) {
+                        // existing participant rejoining
+                    } else if (!ownerId) {
+                        // If the room metadata was never initialized, treat the first joiner as owner.
+                        allowedIds.push(myUserId);
+                    } else if (allowedIds.length < 2) {
+                        // reserve the second slot for the first legitimate joiner
+                        allowedIds.push(myUserId);
+                    } else {
+                        setJoinError("This room is reserved for the original two participants. Only one of them can return.");
+                        return false;
+                    }
+
+                    if (activeIds.length >= 2 && !isAllowed && !isOwner && allowedIds.length >= 2) {
+                        setJoinError("This room already has two active participants. Only one-on-one chats are allowed.");
+                        return false;
+                    }
+
+                    await roomRef.set({
+                        ownerId: ownerId || myUserId,
+                        allowedParticipantIds: allowedIds,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        participants: {
+                            [myUserId]: {
+                                name: displayName || "Guest",
+                                lastSeen: Date.now()
+                            }
+                        }
+                    }, { merge: true });
+
+                    setJoinError("");
+                    return true;
+                } catch (err) {
+                    console.error("Room join validation failed:", err);
+                    setJoinError("Unable to verify room access. Please try again later.");
+                    return false;
+                }
+            };
+
+            const archiveOverflowingMessages = (incomingMessages, archiveUpdater = null) => {
+                if (incomingMessages.length <= MAX_RENDERED_MESSAGES) {
+                    return incomingMessages;
+                }
+
+                const overflowCount = incomingMessages.length - MAX_RENDERED_MESSAGES;
+                const overflow = incomingMessages.slice(0, overflowCount);
+                const visible = incomingMessages.slice(overflowCount);
+
+                if (archiveUpdater) {
+                    archiveUpdater(prevArchive => [...prevArchive, ...overflow]);
+                }
+
+                return visible;
+            };
+
+            const appendMessages = (newMessages) => {
+                setMessages(prev => {
+                    const filteredNew = newMessages.filter(msg => !prev.some(existing => existing.id === msg.id));
+                    if (filteredNew.length === 0) return prev;
+
+                    const combined = [...prev, ...filteredNew];
+                    if (combined.length <= MAX_RENDERED_MESSAGES) {
+                        return combined;
+                    }
+
+                    const overflowCount = combined.length - MAX_RENDERED_MESSAGES;
+                    const overflow = combined.slice(0, overflowCount);
+                    setArchivedMessages(prevArchive => [...prevArchive, ...overflow]);
+                    return combined.slice(overflowCount);
+                });
+            };
+
+            const handleChatScroll = () => {
+                const container = messagesContainerRef.current;
+                if (!container) return;
+
+                const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+                isNearBottomRef.current = distanceFromBottom < AUTO_SCROLL_THRESHOLD_PX;
+
+                if (container.scrollTop > LAZY_LOAD_THRESHOLD_PX || archivedMessages.length === 0) return;
+
+                const previousHeight = container.scrollHeight;
+                const previousScrollTop = container.scrollTop;
+                const count = Math.min(ARCHIVE_BATCH_SIZE, archivedMessages.length);
+                const olderBatch = archivedMessages.slice(0, count);
+
+                setArchivedMessages(prev => prev.slice(count));
+                setMessages(prev => [...olderBatch, ...prev]);
+
+                window.requestAnimationFrame(() => {
+                    if (!container) return;
+                    container.scrollTop = container.scrollHeight - previousHeight + previousScrollTop;
+                });
+            };
+
+            const searchGifs = async (query) => {
+                const trimmed = query.trim();
+                if (!trimmed) return;
+                setGifLoading(true);
+                setGifResults([]);
+
+                try {
+                    if (gifProvider === "giphy") {
+                        const response = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(trimmed)}&limit=${GIF_FETCH_LIMIT}&rating=pg-13`);
+                        if (!response.ok) throw new Error("Giphy lookup failed");
+                        const data = await response.json();
+                        setGifResults((data.data || []).map((item) => ({
+                            id: item.id,
+                            url: item.images?.original?.webp || item.images?.original?.url,
+                            preview: item.images?.fixed_width_small?.url || item.images?.fixed_width?.url,
+                            title: item.title || trimmed
+                        })).filter((item) => item.url));
+                    } else {
+                        const response = await fetch(`https://g.tenor.com/v1/search?q=${encodeURIComponent(trimmed)}&key=${TENOR_API_KEY}&limit=${GIF_FETCH_LIMIT}`);
+                        if (!response.ok) throw new Error("Tenor lookup failed");
+                        const data = await response.json();
+                        setGifResults((data.results || []).map((item) => ({
+                            id: item.id,
+                            url: item.media?.[0]?.gif?.url || item.media?.[0]?.mediumgif?.url || item.media?.[0]?.nanogif?.url,
+                            preview: item.media?.[0]?.tinygif?.url || item.media?.[0]?.nanogif?.url || item.media?.[0]?.gif?.url,
+                            title: item.title || trimmed
+                        })).filter((item) => item.url));
+                    }
+                } catch (error) {
+                    console.error("GIF search failed", error);
+                    setGifResults([]);
+                } finally {
+                    setGifLoading(false);
+                }
+            };
+
+            const sendGif = async (gifUrl) => {
+                if (!gifUrl || !cryptoKey) return;
+                const payload = JSON.stringify({ type: "gif", url: gifUrl });
+                const encrypted = await encryptText(payload, cryptoKey);
+                const expiryTime = Date.now() + (selfDestructMinutes * 60 * 1000);
+
+                if (firebaseConfig) {
+                    try {
+                        const db = firebase.firestore();
+                        await db.collection("rooms").doc(roomID).collection("messages").add({
+                            ciphertext: encrypted.ciphertext,
+                            iv: encrypted.iv,
+                            senderId: myUserId,
+                            senderName: username || "Guest",
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            expiresAt: expiryTime
+                        });
+                    } catch (err) {
+                        console.error("Firebase write error: ", err);
+                    }
+                }
+
+                setShowGifPicker(false);
+                setGifSearchTerm("");
+                setGifResults([]);
+            };
+
             // -------------------------------------------------------------------------
             // Room Entry / Session Setup Controller
             // -------------------------------------------------------------------------
@@ -481,9 +888,16 @@
                 e.preventDefault();
                 if (!username.trim()) return;
 
+                if (!username.trim()) return;
+                localStorage.setItem("GHOST_USERNAME", username.trim());
+
                 if (isJoiningWithLink && roomID && cryptoKey) {
-                    // Instantly launch with extracted configurations
-                    setIsCreated(true);
+                    // Instantly launch with extracted configurations if room is still joinable
+                    setJoinError("");
+                    const joined = await verifyRoomJoin(roomID, username.trim());
+                    if (joined) {
+                        setIsCreated(true);
+                    }
                 } else {
                     // Create completely new cryptographic settings
                     const newRoomId = Math.random().toString(36).substring(2, 10);
@@ -499,6 +913,20 @@
                     setInviteLink(secureInviteLink);
                     setRoomID(newRoomId);
                     setCryptoKey(secureKey);
+
+                    if (firebaseConfig) {
+                        try {
+                            const db = initializeFirestore();
+                            await db.collection("rooms").doc(newRoomId).set({
+                                ownerId: myUserId,
+                                allowedParticipantIds: [myUserId],
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            }, { merge: true });
+                        } catch (err) {
+                            console.error("Failed to initialize room metadata:", err);
+                        }
+                    }
+
                     setIsCreated(true);
 
                     try {
@@ -536,34 +964,11 @@
 
                 const textToSend = inputText.trim();
                 setInputText("");
-                setShowEmojiPicker(false);
 
                 const encrypted = await encryptText(textToSend, cryptoKey);
                 const expiryTime = Date.now() + (selfDestructMinutes * 60 * 1000);
 
-                if (connectionMode === "demo") {
-                    const localMsgId = Math.random().toString(36).substring(2, 9);
-                    const localMsg = {
-                        id: localMsgId,
-                        content: textToSend,
-                        senderId: myUserId,
-                        senderName: username || "Guest",
-                        createdAt: Date.now(),
-                        expiresAt: expiryTime
-                    };
-
-                    setMessages(prev => [...prev, localMsg]);
-
-                    if (broadcastChannelRef.current) {
-                        broadcastChannelRef.current.postMessage({
-                            encrypted,
-                            senderId: myUserId,
-                            senderName: username || "Guest",
-                            createdAt: Date.now(),
-                            expiresAt: expiryTime
-                        });
-                    }
-                } else if (connectionMode === "firebase" && firebaseConfig) {
+                if (firebaseConfig) {
                     try {
                         const db = firebase.firestore();
                         await db.collection("rooms").doc(roomID).collection("messages").add({
@@ -578,10 +983,6 @@
                         console.error("Firebase write error: ", err);
                     }
                 }
-            };
-
-            const appendEmoji = (emoji) => {
-                setInputText(prev => prev + emoji);
             };
 
             // -------------------------------------------------------------------------
@@ -605,13 +1006,12 @@
 
                 localStorage.setItem("GHOST_FIREBASE_CONFIG", JSON.stringify(conf));
                 setFirebaseConfig(conf);
-                setConnectionMode("firebase");
                 setShowSettings(false);
             };
 
             // Apply newly initialized theme to physical body
             useEffect(() => {
-                document.body.className = `${currentTheme.bg} text-gray-100 flex items-center justify-center transition-all duration-300`;
+                document.body.className = `${currentTheme.bg} ${currentTheme.textColor || 'text-gray-100'} flex items-center justify-center transition-all duration-300`;
                 const rootContainer = document.getElementById('root');
                 if (rootContainer) {
                     rootContainer.className = `w-full h-full max-w-md ${currentTheme.bg} md:rounded-2xl md:shadow-2xl md:border ${currentTheme.border} md:h-[90vh] md:max-h-[850px] relative overflow-hidden flex flex-col transition-all duration-300`;
@@ -621,7 +1021,7 @@
             // Initialize Lucide Icons after React rendering cycle
             useEffect(() => {
                 if (window.lucide) window.lucide.createIcons();
-            }, [isCreated, showSettings, showEmojiPicker, connectionMode, copied, soundEnabled, themeKey, isJoiningWithLink]);
+            }, [isCreated, showSettings, copied, soundEnabled, themeKey, isJoiningWithLink]);
 
             // =========================================================================
             // RENDERING PHASE
@@ -634,7 +1034,7 @@
                         {/* Header Branding */}
                         <div className="text-center mt-6">
                             <div className={`mx-auto w-16 h-16 ${currentTheme.messageSelfBg} rounded-2xl flex items-center justify-center shadow-lg mb-4 transition-all duration-300`}>
-                                <i data-lucide="shield-alert" className="w-8 h-8 text-white"></i>
+                                <i data-lucide="shield-alert" className={`w-8 h-8 ${currentTheme.isLight ? 'text-slate-900' : 'text-white'}`}></i>
                             </div>
                             <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-purple-200 to-gray-400 bg-clip-text text-transparent">GhostChat</h1>
                             <p className="text-xs text-gray-400 mt-2 tracking-wide uppercase font-semibold">Zero accounts. Total Privacy.</p>
@@ -644,10 +1044,10 @@
                         <div className="my-auto space-y-5">
                             <div className={`${currentTheme.cardBg} p-4 rounded-xl space-y-3 transition-all duration-300`}>
                                 <h3 className={`text-sm font-semibold ${currentTheme.textAccent} flex items-center gap-2`}>
-                                    <i data-lucide="lock" className="w-4 h-4"></i> End-To-End Encrypted
+                                    <i data-lucide="lock" className={`w-4 h-4 ${currentTheme.isLight ? 'text-slate-700' : 'text-gray-400'}`}></i> End-To-End Encrypted
                                 </h3>
-                                <p className="text-xs text-gray-400 leading-relaxed">
-                                    A cryptographic key is generated inside your browser and appended to the URL hash. Because hash data stays client-side, <span className="text-gray-300 font-semibold">no server can ever read your messages</span>.
+                                <p className={`text-xs leading-relaxed ${currentTheme.isLight ? 'text-slate-600' : 'text-gray-400'}`}>
+                                    A cryptographic key is generated inside your browser and appended to the URL hash. Because hash data stays client-side, <span className={`${currentTheme.isLight ? 'text-slate-700 font-semibold' : 'text-gray-300 font-semibold'}`}>no server can ever read your messages</span>.
                                 </p>
                             </div>
 
@@ -661,7 +1061,7 @@
                                         placeholder="e.g. Alice" 
                                         value={username}
                                         onChange={(e) => setUsername(e.target.value)}
-                                        className={`w-full ${currentTheme.inputBg} rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all text-sm font-medium`}
+                                        className={`w-full ${currentTheme.inputBg} rounded-xl px-4 py-3.5 ${currentTheme.isLight ? 'text-slate-900 placeholder-slate-500' : 'text-white placeholder-gray-500'} focus:outline-none focus:ring-2 transition-all text-sm font-medium`}
                                     />
                                 </div>
 
@@ -673,10 +1073,15 @@
                                     {isJoiningWithLink ? "Join Secure Chat" : "Create Secure Room"}
                                 </button>
                             </form>
+                            {joinError && (
+                                <div className="mt-3 text-xs text-rose-300 font-semibold text-center">
+                                    {joinError}
+                                </div>
+                            )}
                         </div>
 
                         {/* Footer details */}
-                        <div className="text-center text-[10px] text-gray-500">
+                        <div className={`text-center text-[10px] ${currentTheme.isLight ? 'text-slate-600' : 'text-gray-500'}`}>
                             Powered by Web Crypto API AES-GCM 256-bit encryption.
                         </div>
                     </div>
@@ -692,7 +1097,7 @@
                                 <h2 className={`text-lg font-bold flex items-center gap-2 ${currentTheme.textAccent}`}>
                                     <i data-lucide="settings" className="w-5 h-5"></i> Settings
                                 </h2>
-                                <button onClick={() => setShowSettings(false)} className="text-gray-400 hover:text-white p-1">
+                                <button onClick={() => setShowSettings(false)} className={`${currentTheme.isLight ? 'text-slate-600 hover:text-slate-900' : 'text-gray-400 hover:text-white'} p-1`}>
                                     <i data-lucide="x" className="w-5 h-5"></i>
                                 </button>
                             </div>
@@ -709,7 +1114,7 @@
                                                 setThemeKey(key);
                                                 localStorage.setItem("GHOST_THEME", key);
                                             }}
-                                            className={`p-3 rounded-xl border text-xs font-bold text-left transition-all flex items-center justify-between ${themeKey === key ? 'border-brand-500 bg-brand-500/10 text-white' : 'border-purple-900/10 bg-[#160d31]/20 text-gray-400 hover:text-white'}`}
+                                            className={`p-3 rounded-xl border text-xs font-bold text-left transition-all flex items-center justify-between ${themeKey === key ? 'border-brand-500 bg-brand-500/10 text-white' : (currentTheme.isLight ? 'border-slate-300/70 bg-white/80 text-slate-700 hover:text-slate-900' : 'border-purple-900/10 bg-[#160d31]/20 text-gray-400 hover:text-white')}`}
                                         >
                                             <span>{THEMES[key].name}</span>
                                             <span className={`w-3 h-3 rounded-full ${key === 'orchid' ? 'bg-brand-500' : key === 'cyberpunk' ? 'bg-lime-500' : key === 'obsidian' ? 'bg-zinc-400' : 'bg-sky-500'}`}></span>
@@ -720,57 +1125,31 @@
 
                             {/* Connection Selector */}
                             <div className="space-y-3">
-                                <label className={`block text-xs font-bold uppercase tracking-wider ${currentTheme.textAccent}`}>Sync Connection Mode</label>
-                                <div className={`grid grid-cols-2 gap-3 ${currentTheme.cardBg} p-1 rounded-xl`}>
-                                    <button 
-                                        type="button"
-                                        onClick={() => setConnectionMode("demo")}
-                                        className={`py-2.5 rounded-lg text-xs font-bold transition-all ${connectionMode === "demo" ? `${currentTheme.accentBg} text-white shadow-md` : 'text-gray-400 hover:text-white'}`}
-                                    >
-                                        Demo (Tabs)
-                                    </button>
-                                    <button 
-                                        type="button"
-                                        onClick={() => {
-                                            if (!firebaseConfig) {
-                                                alert("Please configure your Firebase credentials below first!");
-                                                return;
-                                            }
-                                            setConnectionMode("firebase");
-                                        }}
-                                        className={`py-2.5 rounded-lg text-xs font-bold transition-all ${connectionMode === "firebase" ? `${currentTheme.accentBg} text-white shadow-md` : 'text-gray-400 hover:text-white'}`}
-                                    >
-                                        Cloud (Firebase)
-                                    </button>
-                                </div>
-                                <p className="text-[11px] text-gray-400 leading-relaxed">
-                                    {connectionMode === "demo" 
-                                        ? "Demo Mode allows you to open this URL in another tab of this device to test instantly." 
-                                        : "Firebase syncs messages globally across different devices in real-time."}
-                                </p>
+                                <label className={`block text-xs font-bold uppercase tracking-wider ${currentTheme.textAccent}`}>Sync Connection</label>
+                                <p className={`${currentTheme.isLight ? 'text-slate-600' : 'text-gray-400'} text-[11px] leading-relaxed`}>Firebase syncs messages globally across different devices in real-time.</p>
                             </div>
 
                             {/* Custom Config Form */}
                             <form onSubmit={saveFirebaseSettings} className="space-y-4">
                                 <h3 className={`text-xs font-bold uppercase tracking-wider ${currentTheme.textAccent} border-t ${currentTheme.headerBorder} pt-4`}>Cloud Setup (Firebase Firestore)</h3>
                                 <div>
-                                    <label className="block text-[11px] text-gray-400 mb-1">Firebase API Key</label>
+                                    <label className={`block text-[11px] ${currentTheme.isLight ? 'text-slate-600' : 'text-gray-400'} mb-1`}>Firebase API Key</label>
                                     <input 
                                         type="password" 
                                         placeholder="AIzaSy..." 
                                         value={inputApiKey}
                                         onChange={(e) => setInputApiKey(e.target.value)}
-                                        className={`w-full ${currentTheme.inputBg} rounded-xl px-3 py-2 text-xs text-white`}
+                                        className={`w-full ${currentTheme.inputBg} rounded-xl px-3 py-2 text-xs ${currentTheme.isLight ? 'text-slate-900 placeholder-slate-500' : 'text-white'}`}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[11px] text-gray-400 mb-1">Firebase Project ID</label>
+                                    <label className={`block text-[11px] ${currentTheme.isLight ? 'text-slate-600' : 'text-gray-400'} mb-1`}>Firebase Project ID</label>
                                     <input 
                                         type="text" 
                                         placeholder="my-ghost-chat" 
                                         value={inputProjectId}
                                         onChange={(e) => setInputProjectId(e.target.value)}
-                                        className={`w-full ${currentTheme.inputBg} rounded-xl px-3 py-2 text-xs text-white`}
+                                        className={`w-full ${currentTheme.inputBg} rounded-xl px-3 py-2 text-xs ${currentTheme.isLight ? 'text-slate-900 placeholder-slate-500' : 'text-white'}`}
                                     />
                                 </div>
                                 <button 
@@ -783,8 +1162,8 @@
                         </div>
 
                         <div className={`${currentTheme.cardBg} p-3 rounded-xl text-center mt-6`}>
-                            <span className="text-xs text-gray-400">Current Session User ID: </span>
-                            <code className="text-xs font-bold text-gray-200">{myUserId}</code>
+                            <span className={`${currentTheme.isLight ? 'text-slate-600' : 'text-xs text-gray-400'}`}>Current Session User ID: </span>
+                            <code className={`${currentTheme.isLight ? 'text-slate-900' : 'text-xs font-bold text-gray-200'}`}>{myUserId}</code>
                         </div>
                     </div>
                 );
@@ -796,44 +1175,59 @@
                     
                     {/* Header bar */}
                     <header className={`px-4 py-3 ${currentTheme.headerBg} border-b ${currentTheme.headerBorder} backdrop-blur-md flex items-center justify-between z-10 shrink-0 transition-all`}>
-                        <div className="flex items-center gap-2.5">
-                            <div className="relative">
-                                <div className={`w-9 h-9 ${currentTheme.cardBg} border-purple-900/10 rounded-full flex items-center justify-center`}>
-                                    <i data-lucide="ghost" className={`w-5 h-5 ${currentTheme.textAccent}`}></i>
+<div className="relative">
+                                    <div className={`w-9 h-9 ${currentTheme.cardBg} border-purple-900/10 rounded-full flex items-center justify-center`}>
+                                        <i data-lucide="ghost" className={`w-5 h-5 ${currentTheme.textAccent}`}></i>
+                                    </div>
+                                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#130b2b] bg-emerald-500"></span>
                                 </div>
-                                <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#130b2b] ${connectionMode === "firebase" ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                            </div>
-                            <div>
-                                <h2 className="text-sm font-bold text-white leading-none">Ghost Room</h2>
-                                <span className={`text-[10px] ${currentTheme.textAccent} font-semibold tracking-wide uppercase`}>
-                                    {connectionMode === "firebase" ? 'Firebase Cloud' : 'Local Demo Channel'}
-                                </span>
-                            </div>
+                                <div>
+                                    <h2 className={`${currentTheme.isLight ? 'text-slate-900' : 'text-white'} text-sm font-bold leading-none`}>Ghost Room</h2>
+                                    <span className={`text-[10px] ${currentTheme.textAccent} font-semibold tracking-wide uppercase`}>Firebase Cloud</span>
+                                    <span className={`text-[10px] ${currentTheme.isLight ? 'text-slate-500' : 'text-gray-400'} block mt-0.5`}>{activeParticipants} / 2 active users</span>
                         </div>
 
                         <div className="flex items-center gap-1">
                             {/* Copy Invite Link */}
-                            <button 
-                                onClick={copyInviteLink} 
-                                className={`h-8 px-3 rounded-lg flex items-center gap-1 text-xs font-semibold transition-all ${copied ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/30' : `bg-gray-800/20 text-gray-200 border border-purple-500/10 hover:bg-gray-800/40`}`}
-                            >
-                                <i data-lucide={copied ? "check" : "share-2"} className="w-3.5 h-3.5"></i>
-                                {copied ? "Copied" : "Share"}
-                            </button>
+                            {!participantsLocked && (
+                                <button 
+                                    onClick={copyInviteLink} 
+                                    className={`h-8 px-3 rounded-lg flex items-center gap-1 text-xs font-semibold transition-all ${copied ? (currentTheme.isLight ? 'bg-emerald-600/10 text-emerald-700 border border-emerald-200' : 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/30') : (currentTheme.isLight ? 'bg-slate-100/90 text-slate-900 border border-slate-300 hover:bg-slate-200' : 'bg-gray-800/20 text-gray-200 border border-purple-500/10 hover:bg-gray-800/40')}`}
+                                >
+                                    <i data-lucide={copied ? "check" : "share-2"} className="w-3.5 h-3.5"></i>
+                                    {copied ? "Copied" : "Share"}
+                                </button>
+                            )}
 
                             {/* Sound Toggle */}
                             <button 
-                                onClick={() => setSoundEnabled(!soundEnabled)} 
-                                className={`w-8 h-8 rounded-lg hover:bg-gray-800/40 flex items-center justify-center text-gray-400 hover:text-white`}
-                                title="Toggle Sound"
+                                onClick={() => {
+                                    const nextValue = !soundEnabled;
+                                    setSoundEnabled(nextValue);
+                                    localStorage.setItem("GHOST_SOUND_ENABLED", nextValue.toString());
+                                }} 
+                                className={`w-8 h-8 rounded-lg ${currentTheme.isLight ? 'hover:bg-slate-200' : 'hover:bg-gray-800/40'} flex items-center justify-center ${soundEnabled ? (currentTheme.isLight ? 'text-slate-600 hover:text-slate-900' : 'text-gray-400 hover:text-white') : 'text-rose-400 hover:text-rose-300'}`}
+                                title={soundEnabled ? "Mute sound" : "Unmute sound"}
                             >
-                                <i data-lucide={soundEnabled ? "volume-2" : "volume-x"} className="w-4 h-4"></i>
+                                {soundEnabled ? (
+                                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                                        <path d="M19.07 4.93a9 9 0 0 1 0 14.14" />
+                                    </svg>
+                                ) : (
+                                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                                        <line x1="23" y1="9" x2="17" y2="15" />
+                                        <line x1="17" y1="9" x2="23" y2="15" />
+                                    </svg>
+                                )}
                             </button>
 
                             {/* Settings */}
                             <button 
                                 onClick={() => setShowSettings(true)} 
-                                className={`w-8 h-8 rounded-lg hover:bg-gray-800/40 flex items-center justify-center text-gray-400 hover:text-white`}
+                                className={`w-8 h-8 rounded-lg ${currentTheme.isLight ? 'hover:bg-slate-200' : 'hover:bg-gray-800/40'} flex items-center justify-center ${currentTheme.isLight ? 'text-slate-600 hover:text-slate-900' : 'text-gray-400 hover:text-white'}`}
                             >
                                 <i data-lucide="settings" className="w-4 h-4"></i>
                             </button>
@@ -841,35 +1235,45 @@
                     </header>
 
                     {/* Messages Board */}
-                    <main className="flex-1 overflow-y-auto p-4 space-y-4 chat-scroll">
+                    <main ref={messagesContainerRef} onScroll={handleChatScroll} className="flex-1 overflow-y-auto p-4 space-y-4 chat-scroll">
                         
                         {/* Security Announcement Indicator */}
-                        <div className={`${currentTheme.cardBg} border-purple-900/10 rounded-xl p-3 text-center space-y-1 max-w-sm mx-auto transition-all`}>
+                        <div className={`${currentTheme.cardBg} ${currentTheme.isLight ? 'border-slate-200/80' : 'border-purple-900/10'} rounded-xl p-3 text-center space-y-1 max-w-sm mx-auto transition-all`}>
                             <span className={`text-[10px] font-bold ${currentTheme.textAccent} uppercase tracking-widest flex items-center justify-center gap-1`}>
                                 <i data-lucide="shield" className="w-3 h-3"></i> Cryptography Verified
                             </span>
-                            <p className="text-[11px] text-gray-400">
+                            <p className={`${currentTheme.isLight ? 'text-slate-600' : 'text-gray-400'} text-[11px]`}>
                                 Messages are encrypted locally on your phone before transit.
                             </p>
                         </div>
 
                         {messages.length === 0 ? (
-                            <div className="h-4/5 flex flex-col items-center justify-center text-center space-y-3 p-6 text-gray-500">
-                                <div className="w-12 h-12 rounded-full border border-dashed border-gray-800 flex items-center justify-center">
-                                    <i data-lucide="message-square" className="w-6 h-6 text-gray-800"></i>
+                            <div className={`h-4/5 flex flex-col items-center justify-center text-center space-y-3 p-6 ${currentTheme.isLight ? 'text-slate-500' : 'text-gray-500'}`}>
+                                <div className={`w-12 h-12 rounded-full border border-dashed ${currentTheme.isLight ? 'border-slate-300' : 'border-gray-800'} flex items-center justify-center`}>
+                                    <i data-lucide="message-square" className={`w-6 h-6 ${currentTheme.isLight ? 'text-slate-700' : 'text-gray-800'}`}></i>
                                 </div>
                                 <p className="text-xs">No secure signals detected yet.<br />Send a message to ignite this chat.</p>
                             </div>
                         ) : (
                             messages.map((msg) => {
                                 const isSelf = msg.senderId === myUserId;
+                                let gifPayload = null;
+                                try {
+                                    const parsed = JSON.parse(msg.content);
+                                    if (parsed?.type === "gif" && parsed?.url) {
+                                        gifPayload = parsed;
+                                    }
+                                } catch (err) {
+                                    gifPayload = null;
+                                }
+
                                 return (
                                     <div 
                                         key={msg.id} 
                                         className={`flex flex-col max-w-[80%] ${isSelf ? 'ml-auto items-end' : 'mr-auto items-start'}`}
                                     >
                                         <div className="flex items-center gap-1.5 mb-1">
-                                            <span className="text-[10px] font-bold text-gray-400">
+                                            <span className={`text-[10px] font-bold ${currentTheme.isLight ? 'text-slate-600' : 'text-gray-400'}`}>
                                                 {isSelf ? 'You' : msg.senderName}
                                             </span>
                                             <span className="text-[10px] text-gray-600">
@@ -882,7 +1286,15 @@
                                             </span>
                                         </div>
                                         <div className={`p-3.5 rounded-2xl text-sm leading-relaxed tracking-wide ${isSelf ? `${currentTheme.messageSelfBg} text-white rounded-tr-none shadow-md` : `${currentTheme.messageOtherBg} rounded-tl-none`}`}>
-                                            {msg.content}
+                                            {gifPayload ? (
+                                                <img 
+                                                    src={gifPayload.url} 
+                                                    alt={gifPayload.title || 'GIF'}
+                                                    className="w-full max-w-[18rem] rounded-2xl object-cover"
+                                                />
+                                            ) : (
+                                                msg.content
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -891,22 +1303,9 @@
                         <div ref={messagesEndRef} />
                     </main>
 
-                    {/* Quick Reactions Deck */}
-                    <div className={`px-3 py-1.5 bg-black/40 border-t ${currentTheme.headerBorder} flex items-center justify-between overflow-x-auto gap-2 shrink-0`}>
-                        <div className="flex gap-2">
-                            {popularEmojis.map(emoji => (
-                                <button 
-                                    key={emoji}
-                                    onClick={() => appendEmoji(emoji)}
-                                    className="hover:scale-125 transition-transform duration-100 py-1 px-1.5 text-base"
-                                >
-                                    {emoji}
-                                </button>
-                            ))}
-                        </div>
-                        
-                        {/* Adjustable Self Destruct Countdown Panel */}
-                        <div className="flex items-center gap-1 text-[11px] font-bold text-rose-400 shrink-0 select-none bg-rose-500/5 px-2 py-1 rounded-lg border border-rose-500/10">
+                    {/* Adjustable Self Destruct Countdown Panel */}
+                    <div className={`px-3 py-1.5 ${currentTheme.isLight ? 'bg-slate-100/80' : 'bg-black/40'} border-t ${currentTheme.headerBorder} flex items-center justify-between gap-2 shrink-0`}>
+                        <div className={`flex items-center gap-1 text-[11px] font-bold ${currentTheme.isLight ? 'text-rose-700 bg-rose-200/70 border border-rose-200' : 'text-rose-400 bg-rose-500/5 border border-rose-500/10'} shrink-0 select-none px-2 py-1 rounded-lg`}>
                             <span className="text-[10px]">LIFETIME:</span>
                             <select 
                                 value={selfDestructMinutes}
@@ -924,16 +1323,24 @@
                     </div>
 
                     {/* Bottom Input Area */}
-                    <footer className={`p-3 bg-black/40 border-t ${currentTheme.headerBorder} flex items-center gap-2 shrink-0 pb-safe`}>
+                    <footer className={`p-3 ${currentTheme.isLight ? 'bg-slate-100/80' : 'bg-black/40'} border-t ${currentTheme.headerBorder} flex items-center gap-2 shrink-0 pb-safe`}>
                         <form onSubmit={sendMessage} className="flex-1 flex items-center gap-2 relative">
                             <input 
                                 type="text" 
                                 value={inputText}
                                 onChange={(e) => setInputText(e.target.value)}
                                 placeholder="Whisper securely..." 
-                                className={`flex-1 ${currentTheme.inputBg} rounded-full px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:ring-1 text-sm transition-all`}
+                                className={`flex-1 ${currentTheme.inputBg} rounded-full px-4 py-3.5 ${currentTheme.isLight ? 'text-slate-900 placeholder-slate-500' : 'text-white placeholder-gray-500'} focus:outline-none focus:ring-1 text-sm transition-all`}
                             />
                             
+                            <button 
+                                type="button"
+                                onClick={() => setShowGifPicker((prev) => !prev)}
+                                className={`w-11 h-11 ${currentTheme.cardBg} active:scale-95 rounded-full flex items-center justify-center ${currentTheme.isLight ? 'text-slate-900 border border-slate-300 hover:border-slate-400' : 'text-white border border-purple-900/20 hover:border-purple-500/40'} transition-all shadow-md`}
+                                title="Search GIFs"
+                            >
+                                <i data-lucide="image" className="w-4 h-4"></i>
+                            </button>
                             <button 
                                 type="submit"
                                 className={`w-11 h-11 ${currentTheme.accentBg} active:scale-95 rounded-full flex items-center justify-center text-white transition-all shadow-md cursor-pointer`}
@@ -942,6 +1349,58 @@
                             </button>
                         </form>
                     </footer>
+
+                    {showGifPicker && (
+                        <div className={`px-3 pb-3 ${currentTheme.isLight ? 'bg-slate-100/90' : 'bg-black/70'} border-t ${currentTheme.headerBorder} space-y-3`}>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={gifSearchTerm}
+                                    onChange={(e) => setGifSearchTerm(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); searchGifs(gifSearchTerm); } }}
+                                    placeholder="Search GIFs with Tenor or Giphy..."
+                                    className={`flex-1 ${currentTheme.inputBg} rounded-xl px-4 py-3.5 ${currentTheme.isLight ? 'text-slate-900 placeholder-slate-500' : 'text-white placeholder-gray-500'} focus:outline-none focus:ring-1 text-sm transition-all`}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => searchGifs(gifSearchTerm)}
+                                    className={`w-28 ${currentTheme.accentBg} rounded-xl text-sm font-bold text-white transition-all shadow-md ${currentTheme.isLight ? 'shadow-slate-300/40' : ''}`}
+                                >
+                                    {gifLoading ? 'Searching...' : 'Search'}
+                                </button>
+                            </div>
+                            <div className={`flex items-center gap-2 text-[11px] ${currentTheme.isLight ? 'text-slate-600' : 'text-gray-400'}`}>
+                                <span className={`uppercase tracking-[0.2em] font-semibold ${currentTheme.isLight ? 'text-slate-500' : 'text-gray-300'}`}>Source</span>
+                                {['tenor', 'giphy'].map((provider) => (
+                                    <button
+                                        key={provider}
+                                        type="button"
+                                        onClick={() => setGifProvider(provider)}
+                                        className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all ${gifProvider === provider ? 'bg-brand-600 text-white' : (currentTheme.isLight ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-white/5 text-gray-300 hover:bg-white/10')}`}
+                                    >
+                                        {provider === 'tenor' ? 'Tenor' : 'Giphy'}
+                                    </button>
+                                ))}
+                                <span className={`${currentTheme.isLight ? 'text-slate-600' : 'text-gray-500'}`}>Click a GIF to send instantly.</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                                {gifResults.length > 0 ? gifResults.map((gif) => (
+                                    <button
+                                        key={gif.id}
+                                        type="button"
+                                        onClick={() => sendGif(gif.url)}
+                                        className={`overflow-hidden rounded-2xl ${currentTheme.isLight ? 'bg-slate-100 border border-slate-200' : 'bg-[#110a28] border border-purple-900/30'}`}
+                                    >
+                                        <img src={gif.preview} alt={gif.title || 'GIF preview'} className="w-full h-24 object-cover" />
+                                    </button>
+                                )) : (
+                                    <div className={`${currentTheme.isLight ? 'col-span-3 text-slate-600 leading-relaxed p-4 rounded-2xl border border-slate-200 bg-white/90 text-center' : 'col-span-3 text-[11px] text-gray-400 leading-relaxed p-4 rounded-2xl border border-purple-900/20 bg-[#09070f]/90 text-center'}`}>
+                                        {gifLoading ? 'Loading GIFs…' : 'Enter a search term and press Search to browse GIFs.'}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
