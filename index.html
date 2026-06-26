@@ -26,8 +26,7 @@
         }
     </script>
 
-    <!-- Lucide Icons (SVG library) -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- React-safe icon set rendered directly inside JSX -->
 
     <!-- React and Babel (for running ES6/JSX directly in single file) -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
@@ -45,6 +44,7 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <style>
         /* Custom viewport fix for iOS/Android address bars */
@@ -87,6 +87,111 @@
     <!-- Apply custom 'react-classic' preset to compile JSX correctly on standard browser runtime -->
     <script type="text/babel" data-presets="env,react-classic">
         const { useState, useEffect, useRef } = React;
+
+        function Icon({ name, className, ...props }) {
+            const map = {
+                "shield-alert": (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 3l7 4v5c0 5.25-3.5 9.92-7 11-3.5-1.08-7-5.75-7-11V7l7-4z" />
+                        <path d="M12 8v4" />
+                        <path d="M12 16h.01" />
+                    </svg>
+                ),
+                lock: (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                ),
+                "log-in": (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 3h6v6" />
+                        <path d="M10 14L21 3" />
+                        <path d="M21 3v6" />
+                        <path d="M21 3H15" />
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <path d="M16 12l5-5" />
+                    </svg>
+                ),
+                plus: (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                ),
+                settings: (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 8.6 15a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 8.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 15 9.4" />
+                    </svg>
+                ),
+                x: (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                ),
+                ghost: (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M8 9a4 4 0 0 1 8 0v2h1a3 3 0 0 1 3 3v5h-2l-2-2-2 2-2-2-2 2H5v-5a3 3 0 0 1 3-3h1V9z" />
+                        <path d="M10 14h.01" />
+                        <path d="M14 14h.01" />
+                    </svg>
+                ),
+                check: (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 13l4 4L19 7" />
+                    </svg>
+                ),
+                "share-2": (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="18" cy="5" r="3" />
+                        <circle cx="6" cy="12" r="3" />
+                        <circle cx="18" cy="19" r="3" />
+                        <path d="M8.59 13.51l6.83 3.98" />
+                        <path d="M15.41 6.51l-6.82 3.98" />
+                    </svg>
+                ),
+                shield: (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                ),
+                "message-square": (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                ),
+                hourglass: (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 2h12" />
+                        <path d="M6 22h12" />
+                        <path d="M8 2v6.5a3.5 3.5 0 0 0 1 2.5L12 13l2-1.5a3.5 3.5 0 0 0 1-2.5V2" />
+                        <path d="M16 22v-6.5a3.5 3.5 0 0 0-1-2.5L12 11l-2 1.5a3.5 3.5 0 0 0-1 2.5V22" />
+                    </svg>
+                ),
+                paperclip: (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 12.79V6a4 4 0 0 0-8 0v9.5a3.5 3.5 0 0 0 7 0V9" />
+                        <path d="M7 13v7a4 4 0 0 0 8 0V7" />
+                    </svg>
+                ),
+                image: (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="M21 15l-5-5L9 21" />
+                    </svg>
+                ),
+                send: (
+                    <svg viewBox="0 0 24 24" className={className} {...props} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 2L11 13" />
+                        <path d="M22 2L15 22L11 13L2 9L22 2" />
+                    </svg>
+                )
+            };
+            return map[name] || <span className={className} {...props}></span>;
+        }
 
         // =========================================================================
         // 1. CRYPTO HELPERS (Client-side end-to-end AES-GCM encryption)
@@ -313,10 +418,31 @@
             // Connection & Config States
             const [firebaseConfig, setFirebaseConfig] = useState(() => {
                 const saved = localStorage.getItem("GHOST_FIREBASE_CONFIG");
-                return saved ? JSON.parse(saved) : null;
+                if (!saved) return null;
+                try {
+                    return JSON.parse(saved);
+                } catch (err) {
+                    console.warn("Saved Firebase config is invalid JSON:", err);
+                    return null;
+                }
             });
+            const [firebaseUser, setFirebaseUser] = useState(null);
+            const [firebaseAuthReady, setFirebaseAuthReady] = useState(false);
+            const [pendingRoomLaunch, setPendingRoomLaunch] = useState(false);
+            const firebaseAuthReadyRef = useRef(false);
+            const pendingRoomMetadataRef = useRef(false);
 
-            const [showSettings, setShowSettings] = useState(false);
+            const [showSettings, setShowSettings] = useState(() => {
+                const saved = localStorage.getItem("GHOST_FIREBASE_CONFIG");
+                if (!saved) return true;
+                try {
+                    JSON.parse(saved);
+                    return false;
+                } catch (err) {
+                    console.warn("Saved Firebase config is invalid JSON:", err);
+                    return true;
+                }
+            });
             
             // Live Chat States
             const [messages, setMessages] = useState([]);
@@ -327,6 +453,8 @@
             const [gifResults, setGifResults] = useState([]);
             const [gifLoading, setGifLoading] = useState(false);
             const [gifProvider, setGifProvider] = useState("tenor");
+            const [imageSending, setImageSending] = useState(false);
+            const imageInputRef = useRef(null);
             
             // Default self-destruct 30 minutes, or load customized storage preference
             const [selfDestructMinutes, setSelfDestructMinutes] = useState(() => {
@@ -351,6 +479,7 @@
             const messagesEndRef = useRef(null);
             const firebaseUnsubscribeRef = useRef(null);
             const isNearBottomRef = useRef(true);
+            const soundEnabledRef = useRef(soundEnabled);
 
             const MAX_RENDERED_MESSAGES = 50;
             const ARCHIVE_BATCH_SIZE = 20;
@@ -360,8 +489,7 @@
             const PARTICIPANT_STALE_TIMEOUT_MS = 30000;
 
             // UI System State
-            const [inputApiKey, setInputApiKey] = useState("");
-            const [inputProjectId, setInputProjectId] = useState("");
+            const [inputFirebaseConfigJSON, setInputFirebaseConfigJSON] = useState("");
 
             // -------------------------------------------------------------------------
             // Initial Mount: Parse URL for existing Room & Key
@@ -397,10 +525,17 @@
             }, []);
 
             // -------------------------------------------------------------------------
+            // Update soundEnabledRef whenever soundEnabled changes (for use in callbacks)
+            // -------------------------------------------------------------------------
+            useEffect(() => {
+                soundEnabledRef.current = soundEnabled;
+            }, [soundEnabled]);
+
+            // -------------------------------------------------------------------------
             // Real-Time DB Sync & Listeners (Demo Channel or Firebase)
             // -------------------------------------------------------------------------
             useEffect(() => {
-                if (!isCreated || !roomID || !cryptoKey) return;
+                if (!isCreated || !roomID || !cryptoKey || !firebaseAuthReady) return;
 
                 // Cleanup previous active listener
                 if (firebaseUnsubscribeRef.current) firebaseUnsubscribeRef.current();
@@ -429,25 +564,26 @@
                                 const fetchedMsgs = [];
                                 for (const doc of snapshot.docs) {
                                     const data = doc.data();
-                                    if (data.expiresAt && data.expiresAt < Date.now()) {
-                                        db.collection("rooms").doc(roomID).collection("messages").doc(doc.id).delete();
-                                        continue;
-                                    }
+                                            const expiresAtMs = normalizeExpiresAt(data.expiresAt);
+                                if (expiresAtMs && expiresAtMs < Date.now()) {
+                                    db.collection("rooms").doc(roomID).collection("messages").doc(doc.id).delete();
+                                    continue;
+                                }
 
-                                    const decryptedText = await decryptText(data.ciphertext, data.iv, cryptoKey);
-                                    fetchedMsgs.push({
-                                        id: doc.id,
-                                        content: decryptedText,
-                                        senderId: data.senderId,
-                                        senderName: data.senderName,
-                                        createdAt: data.createdAt?.seconds ? data.createdAt.seconds * 1000 : Date.now(),
-                                        expiresAt: data.expiresAt
-                                    });
+                                const decryptedText = await decryptText(data.ciphertext, data.iv, cryptoKey);
+                                fetchedMsgs.push({
+                                    id: doc.id,
+                                    content: decryptedText,
+                                    senderId: data.senderId,
+                                    senderName: data.senderName,
+                                    createdAt: data.createdAt?.seconds ? data.createdAt.seconds * 1000 : Date.now(),
+                                    expiresAt: expiresAtMs
+                                });
                                 }
 
                                 if (fetchedMsgs.length > 0) {
                                     const lastMsg = fetchedMsgs[fetchedMsgs.length - 1];
-                                    if (lastMsg && lastMsg.senderId !== myUserId && soundEnabled) {
+                                    if (lastMsg && lastMsg.senderId !== myUserId && soundEnabledRef.current) {
                                         playNotificationSound();
                                     }
                                 }
@@ -519,7 +655,8 @@
                                     const olderBatch = [];
                                     for (const doc of olderSnap.docs) {
                                         const data = doc.data();
-                                        if (data.expiresAt && data.expiresAt < Date.now()) continue;
+                                        const expiresAtMs = normalizeExpiresAt(data.expiresAt);
+                                        if (expiresAtMs && expiresAtMs < Date.now()) continue;
                                         const decryptedText = await decryptText(data.ciphertext, data.iv, cryptoKey);
                                         olderBatch.push({
                                             id: doc.id,
@@ -527,7 +664,7 @@
                                             senderId: data.senderId,
                                             senderName: data.senderName,
                                             createdAt: data.createdAt?.seconds ? data.createdAt.seconds * 1000 : Date.now(),
-                                            expiresAt: data.expiresAt
+                                            expiresAt: expiresAtMs
                                         });
                                     }
 
@@ -574,10 +711,33 @@
                 return () => {
                     if (firebaseUnsubscribeRef.current) firebaseUnsubscribeRef.current();
                 };
-            }, [isCreated, roomID, cryptoKey, firebaseConfig, soundEnabled]);
+            }, [isCreated, roomID, cryptoKey, firebaseConfig, firebaseAuthReady]);
 
             useEffect(() => {
-                if (!isCreated || !roomID || !firebaseConfig) return;
+                if (pendingRoomLaunch && firebaseAuthReady) {
+                    setIsCreated(true);
+                    setPendingRoomLaunch(false);
+                }
+
+                if (!isCreated || !roomID || !firebaseConfig || !firebaseAuthReady) return;
+                if (pendingRoomMetadataRef.current) {
+                    const createRoomMetadata = async () => {
+                        try {
+                            const db = initializeFirestore();
+                            await db.collection("rooms").doc(roomID).set({
+                                ownerId: myUserId,
+                                allowedParticipantIds: [myUserId],
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            }, { merge: true });
+                        } catch (err) {
+                            console.error("Failed to initialize pending room metadata:", err);
+                        } finally {
+                            pendingRoomMetadataRef.current = false;
+                        }
+                    };
+                    createRoomMetadata();
+                }
+
                 if (!firebase.apps.length) {
                     firebase.initializeApp(firebaseConfig);
                 }
@@ -696,7 +856,57 @@
                 if (!firebase.apps.length) {
                     firebase.initializeApp(firebaseConfig);
                 }
+                const auth = firebase.auth();
+                if (!auth.currentUser) {
+                    auth.signInAnonymously().catch((err) => {
+                        console.error("Firebase anonymous auth failed:", err);
+                    });
+                }
                 return firebase.firestore();
+            };
+
+            useEffect(() => {
+                if (!firebaseConfig) return;
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+
+                const auth = firebase.auth();
+                const unsubscribe = auth.onAuthStateChanged((user) => {
+                    setFirebaseUser(user);
+                    const ready = !!user;
+                    setFirebaseAuthReady(ready);
+                    firebaseAuthReadyRef.current = ready;
+                });
+
+                if (!auth.currentUser) {
+                    auth.signInAnonymously().catch((err) => {
+                        console.error("Firebase anonymous auth failed:", err);
+                        setFirebaseAuthReady(false);
+                        firebaseAuthReadyRef.current = false;
+                    });
+                } else {
+                    setFirebaseAuthReady(true);
+                    firebaseAuthReadyRef.current = true;
+                }
+
+                return () => {
+                    if (typeof unsubscribe === 'function') unsubscribe();
+                };
+            }, [firebaseConfig]);
+
+            const normalizeExpiresAt = (value) => {
+                if (!value) return null;
+                if (value instanceof firebase.firestore.Timestamp) {
+                    return value.toMillis();
+                }
+                if (typeof value === 'number') {
+                    return value;
+                }
+                if (value?.toMillis) {
+                    return value.toMillis();
+                }
+                return Date.parse(value) || null;
             };
 
             const getActiveParticipantIds = (participants = {}) => {
@@ -854,6 +1064,92 @@
                 }
             };
 
+            const readFileAsDataURL = (file) => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            const createImageDataUrl = async (file) => {
+                const rawDataUrl = await readFileAsDataURL(file);
+                if (typeof rawDataUrl !== 'string') return null;
+
+                return await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const maxDimension = 1200;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width <= maxDimension && height <= maxDimension) {
+                            resolve(rawDataUrl);
+                            return;
+                        }
+
+                        const ratio = maxDimension / Math.max(width, height);
+                        width = Math.round(width * ratio);
+                        height = Math.round(height * ratio);
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.85));
+                    };
+                    img.onerror = reject;
+                    img.src = rawDataUrl;
+                });
+            };
+
+            const sendImage = async (file) => {
+                if (!file || !cryptoKey) return;
+                setImageSending(true);
+
+                try {
+                    const imageDataUrl = await createImageDataUrl(file);
+                    if (!imageDataUrl) return;
+
+                    const payload = JSON.stringify({ type: "image", url: imageDataUrl, name: file.name });
+                    const encrypted = await encryptText(payload, cryptoKey);
+                    const expiryTime = Date.now() + (selfDestructMinutes * 60 * 1000);
+
+                    if (firebaseConfig) {
+                        if (!firebaseAuthReady) {
+                            console.warn("Skipping sendImage while Firebase auth is not ready.");
+                            return;
+                        }
+                        try {
+                            const db = firebase.firestore();
+                            await db.collection("rooms").doc(roomID).collection("messages").add({
+                                ciphertext: encrypted.ciphertext,
+                                iv: encrypted.iv,
+                                senderId: myUserId,
+                                senderName: username || "Guest",
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                expiresAt: firebase.firestore.Timestamp.fromMillis(expiryTime)
+                            });
+                        } catch (err) {
+                            console.error("Firebase write error: ", err);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Image send failed", error);
+                } finally {
+                    setImageSending(false);
+                }
+            };
+
+            const handleImageSelect = async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                e.target.value = "";
+                await sendImage(file);
+            };
+
             const sendGif = async (gifUrl) => {
                 if (!gifUrl || !cryptoKey) return;
                 const payload = JSON.stringify({ type: "gif", url: gifUrl });
@@ -861,6 +1157,10 @@
                 const expiryTime = Date.now() + (selfDestructMinutes * 60 * 1000);
 
                 if (firebaseConfig) {
+                    if (!firebaseAuthReady) {
+                        console.warn("Skipping sendGif while Firebase auth is not ready.");
+                        return;
+                    }
                     try {
                         const db = firebase.firestore();
                         await db.collection("rooms").doc(roomID).collection("messages").add({
@@ -869,7 +1169,7 @@
                             senderId: myUserId,
                             senderName: username || "Guest",
                             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            expiresAt: expiryTime
+                            expiresAt: firebase.firestore.Timestamp.fromMillis(expiryTime)
                         });
                     } catch (err) {
                         console.error("Firebase write error: ", err);
@@ -915,19 +1215,27 @@
                     setCryptoKey(secureKey);
 
                     if (firebaseConfig) {
-                        try {
-                            const db = initializeFirestore();
-                            await db.collection("rooms").doc(newRoomId).set({
-                                ownerId: myUserId,
-                                allowedParticipantIds: [myUserId],
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                            }, { merge: true });
-                        } catch (err) {
-                            console.error("Failed to initialize room metadata:", err);
+                        if (!firebaseAuthReady) {
+                            pendingRoomMetadataRef.current = true;
+                            setPendingRoomLaunch(true);
+                            console.warn("Firebase auth not ready yet, delaying room metadata initialization.");
+                        } else {
+                            try {
+                                const db = initializeFirestore();
+                                await db.collection("rooms").doc(newRoomId).set({
+                                    ownerId: myUserId,
+                                    allowedParticipantIds: [myUserId],
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                }, { merge: true });
+                            } catch (err) {
+                                console.error("Failed to initialize room metadata:", err);
+                            }
                         }
                     }
 
-                    setIsCreated(true);
+                    if (!firebaseConfig || firebaseAuthReady) {
+                        setIsCreated(true);
+                    }
 
                     try {
                         window.history.replaceState(null, "", secureInviteLink);
@@ -969,6 +1277,10 @@
                 const expiryTime = Date.now() + (selfDestructMinutes * 60 * 1000);
 
                 if (firebaseConfig) {
+                    if (!firebaseAuthReady) {
+                        console.warn("Skipping sendMessage while Firebase auth is not ready.");
+                        return;
+                    }
                     try {
                         const db = firebase.firestore();
                         await db.collection("rooms").doc(roomID).collection("messages").add({
@@ -977,7 +1289,7 @@
                             senderId: myUserId,
                             senderName: username || "Guest",
                             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            expiresAt: expiryTime
+                            expiresAt: firebase.firestore.Timestamp.fromMillis(expiryTime)
                         });
                     } catch (err) {
                         console.error("Firebase write error: ", err);
@@ -990,23 +1302,27 @@
             // -------------------------------------------------------------------------
             const saveFirebaseSettings = (e) => {
                 e.preventDefault();
-                if (!inputApiKey || !inputProjectId) {
-                    alert("Please fill in key details.");
+                if (!inputFirebaseConfigJSON.trim()) {
+                    alert("Please paste your Firebase config JSON.");
                     return;
                 }
 
-                const conf = {
-                    apiKey: inputApiKey,
-                    authDomain: `${inputProjectId}.firebaseapp.com`,
-                    projectId: inputProjectId,
-                    storageBucket: `${inputProjectId}.appspot.com`,
-                    messagingSenderId: "1234567890",
-                    appId: `1:${Math.floor(Math.random() * 1000000000)}:web:${Math.random().toString(36).substring(2, 10)}`
-                };
+                try {
+                    const parsed = JSON.parse(inputFirebaseConfigJSON.trim());
+                    const requiredKeys = ["apiKey", "authDomain", "projectId", "storageBucket", "messagingSenderId", "appId"];
+                    const missing = requiredKeys.filter((key) => !parsed[key]);
+                    if (missing.length > 0) {
+                        alert(`Missing required Firebase config fields: ${missing.join(', ')}`);
+                        return;
+                    }
 
-                localStorage.setItem("GHOST_FIREBASE_CONFIG", JSON.stringify(conf));
-                setFirebaseConfig(conf);
-                setShowSettings(false);
+                    localStorage.setItem("GHOST_FIREBASE_CONFIG", JSON.stringify(parsed));
+                    setFirebaseConfig(parsed);
+                    setShowSettings(false);
+                } catch (err) {
+                    alert("Invalid JSON. Please paste the Firebase web app config object exactly.");
+                    console.error("Failed to parse Firebase config JSON:", err);
+                }
             };
 
             // Apply newly initialized theme to physical body
@@ -1018,9 +1334,23 @@
                 }
             }, [themeKey]);
 
-            // Initialize Lucide Icons after React rendering cycle
+            // Keep settings open until a valid Firebase config is present
             useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
+                if (!firebaseConfig) {
+                    setShowSettings(true);
+                }
+            }, [firebaseConfig]);
+
+            // Keep settings open until a valid Firebase config is present
+            useEffect(() => {
+                if (!firebaseConfig) {
+                    setShowSettings(true);
+                }
+            }, [firebaseConfig]);
+
+            // No external DOM icon injection; icons are rendered via React-safe SVGs
+            useEffect(() => {
+                // This effect is intentionally empty to preserve React DOM stability.
             }, [isCreated, showSettings, copied, soundEnabled, themeKey, isJoiningWithLink]);
 
             // =========================================================================
@@ -1034,7 +1364,7 @@
                         {/* Header Branding */}
                         <div className="text-center mt-6">
                             <div className={`mx-auto w-16 h-16 ${currentTheme.messageSelfBg} rounded-2xl flex items-center justify-center shadow-lg mb-4 transition-all duration-300`}>
-                                <i data-lucide="shield-alert" className={`w-8 h-8 ${currentTheme.isLight ? 'text-slate-900' : 'text-white'}`}></i>
+                                <Icon name="shield-alert" className={`w-8 h-8 ${currentTheme.isLight ? 'text-slate-900' : 'text-white'}`} />
                             </div>
                             <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-purple-200 to-gray-400 bg-clip-text text-transparent">GhostChat</h1>
                             <p className="text-xs text-gray-400 mt-2 tracking-wide uppercase font-semibold">Zero accounts. Total Privacy.</p>
@@ -1044,7 +1374,7 @@
                         <div className="my-auto space-y-5">
                             <div className={`${currentTheme.cardBg} p-4 rounded-xl space-y-3 transition-all duration-300`}>
                                 <h3 className={`text-sm font-semibold ${currentTheme.textAccent} flex items-center gap-2`}>
-                                    <i data-lucide="lock" className={`w-4 h-4 ${currentTheme.isLight ? 'text-slate-700' : 'text-gray-400'}`}></i> End-To-End Encrypted
+                                    <Icon name="lock" className={`w-4 h-4 ${currentTheme.isLight ? 'text-slate-700' : 'text-gray-400'}`} /> End-To-End Encrypted
                                 </h3>
                                 <p className={`text-xs leading-relaxed ${currentTheme.isLight ? 'text-slate-600' : 'text-gray-400'}`}>
                                     A cryptographic key is generated inside your browser and appended to the URL hash. Because hash data stays client-side, <span className={`${currentTheme.isLight ? 'text-slate-700 font-semibold' : 'text-gray-300 font-semibold'}`}>no server can ever read your messages</span>.
@@ -1069,7 +1399,7 @@
                                     type="submit" 
                                     className={`w-full ${currentTheme.accentBg} active:transform active:scale-98 text-white rounded-xl py-4 font-bold text-sm tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer`}
                                 >
-                                    <i data-lucide={isJoiningWithLink ? "log-in" : "plus"} className="w-5 h-5"></i> 
+                                    <Icon name={isJoiningWithLink ? "log-in" : "plus"} className="w-5 h-5" />
                                     {isJoiningWithLink ? "Join Secure Chat" : "Create Secure Room"}
                                 </button>
                             </form>
@@ -1095,11 +1425,13 @@
                         <div className="space-y-6">
                             <div className={`flex items-center justify-between border-b ${currentTheme.headerBorder} pb-4 mb-2`}>
                                 <h2 className={`text-lg font-bold flex items-center gap-2 ${currentTheme.textAccent}`}>
-                                    <i data-lucide="settings" className="w-5 h-5"></i> Settings
+                                    <Icon name="settings" className="w-5 h-5" /> Settings
                                 </h2>
-                                <button onClick={() => setShowSettings(false)} className={`${currentTheme.isLight ? 'text-slate-600 hover:text-slate-900' : 'text-gray-400 hover:text-white'} p-1`}>
-                                    <i data-lucide="x" className="w-5 h-5"></i>
-                                </button>
+                                {firebaseConfig && (
+                                    <button onClick={() => setShowSettings(false)} className={`${currentTheme.isLight ? 'text-slate-600 hover:text-slate-900' : 'text-gray-400 hover:text-white'} p-1`}>
+                                        <Icon name="x" className="w-5 h-5" />
+                                    </button>
+                                )}
                             </div>
 
                             {/* Theme Customizer Section */}
@@ -1133,25 +1465,16 @@
                             <form onSubmit={saveFirebaseSettings} className="space-y-4">
                                 <h3 className={`text-xs font-bold uppercase tracking-wider ${currentTheme.textAccent} border-t ${currentTheme.headerBorder} pt-4`}>Cloud Setup (Firebase Firestore)</h3>
                                 <div>
-                                    <label className={`block text-[11px] ${currentTheme.isLight ? 'text-slate-600' : 'text-gray-400'} mb-1`}>Firebase API Key</label>
-                                    <input 
-                                        type="password" 
-                                        placeholder="AIzaSy..." 
-                                        value={inputApiKey}
-                                        onChange={(e) => setInputApiKey(e.target.value)}
-                                        className={`w-full ${currentTheme.inputBg} rounded-xl px-3 py-2 text-xs ${currentTheme.isLight ? 'text-slate-900 placeholder-slate-500' : 'text-white'}`}
+                                    <label className={`block text-[11px] ${currentTheme.isLight ? 'text-slate-600' : 'text-gray-400'} mb-1`}>Firebase Config JSON</label>
+                                    <textarea
+                                        rows="8"
+                                        placeholder='Paste Firebase web app config JSON here, e.g. {"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'
+                                        value={inputFirebaseConfigJSON}
+                                        onChange={(e) => setInputFirebaseConfigJSON(e.target.value)}
+                                        className={`w-full ${currentTheme.inputBg} rounded-xl px-3 py-2 text-[11px] leading-tight ${currentTheme.isLight ? 'text-slate-900 placeholder-slate-500' : 'text-white'} focus:outline-none`}
                                     />
                                 </div>
-                                <div>
-                                    <label className={`block text-[11px] ${currentTheme.isLight ? 'text-slate-600' : 'text-gray-400'} mb-1`}>Firebase Project ID</label>
-                                    <input 
-                                        type="text" 
-                                        placeholder="my-ghost-chat" 
-                                        value={inputProjectId}
-                                        onChange={(e) => setInputProjectId(e.target.value)}
-                                        className={`w-full ${currentTheme.inputBg} rounded-xl px-3 py-2 text-xs ${currentTheme.isLight ? 'text-slate-900 placeholder-slate-500' : 'text-white'}`}
-                                    />
-                                </div>
+                                <p className={`text-[10px] ${currentTheme.isLight ? 'text-slate-500' : 'text-gray-400'}`}>You can copy this entire config from your Firebase console under Project settings → Your apps.</p>
                                 <button 
                                     type="submit"
                                     className={`w-full ${currentTheme.accentBg} text-white rounded-lg py-2.5 text-xs font-bold transition-colors shadow-lg cursor-pointer`}
@@ -1177,7 +1500,7 @@
                     <header className={`px-4 py-3 ${currentTheme.headerBg} border-b ${currentTheme.headerBorder} backdrop-blur-md flex items-center justify-between z-10 shrink-0 transition-all`}>
 <div className="relative">
                                     <div className={`w-9 h-9 ${currentTheme.cardBg} border-purple-900/10 rounded-full flex items-center justify-center`}>
-                                        <i data-lucide="ghost" className={`w-5 h-5 ${currentTheme.textAccent}`}></i>
+                                        <Icon name="ghost" className={`w-5 h-5 ${currentTheme.textAccent}`} />
                                     </div>
                                     <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#130b2b] bg-emerald-500"></span>
                                 </div>
@@ -1194,7 +1517,7 @@
                                     onClick={copyInviteLink} 
                                     className={`h-8 px-3 rounded-lg flex items-center gap-1 text-xs font-semibold transition-all ${copied ? (currentTheme.isLight ? 'bg-emerald-600/10 text-emerald-700 border border-emerald-200' : 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/30') : (currentTheme.isLight ? 'bg-slate-100/90 text-slate-900 border border-slate-300 hover:bg-slate-200' : 'bg-gray-800/20 text-gray-200 border border-purple-500/10 hover:bg-gray-800/40')}`}
                                 >
-                                    <i data-lucide={copied ? "check" : "share-2"} className="w-3.5 h-3.5"></i>
+                                    <Icon name={copied ? "check" : "share-2"} className="w-3.5 h-3.5" />
                                     {copied ? "Copied" : "Share"}
                                 </button>
                             )}
@@ -1229,7 +1552,7 @@
                                 onClick={() => setShowSettings(true)} 
                                 className={`w-8 h-8 rounded-lg ${currentTheme.isLight ? 'hover:bg-slate-200' : 'hover:bg-gray-800/40'} flex items-center justify-center ${currentTheme.isLight ? 'text-slate-600 hover:text-slate-900' : 'text-gray-400 hover:text-white'}`}
                             >
-                                <i data-lucide="settings" className="w-4 h-4"></i>
+                                <Icon name="settings" className="w-4 h-4" />
                             </button>
                         </div>
                     </header>
@@ -1240,7 +1563,7 @@
                         {/* Security Announcement Indicator */}
                         <div className={`${currentTheme.cardBg} ${currentTheme.isLight ? 'border-slate-200/80' : 'border-purple-900/10'} rounded-xl p-3 text-center space-y-1 max-w-sm mx-auto transition-all`}>
                             <span className={`text-[10px] font-bold ${currentTheme.textAccent} uppercase tracking-widest flex items-center justify-center gap-1`}>
-                                <i data-lucide="shield" className="w-3 h-3"></i> Cryptography Verified
+                                <Icon name="shield" className="w-3 h-3" /> Cryptography Verified
                             </span>
                             <p className={`${currentTheme.isLight ? 'text-slate-600' : 'text-gray-400'} text-[11px]`}>
                                 Messages are encrypted locally on your phone before transit.
@@ -1250,7 +1573,7 @@
                         {messages.length === 0 ? (
                             <div className={`h-4/5 flex flex-col items-center justify-center text-center space-y-3 p-6 ${currentTheme.isLight ? 'text-slate-500' : 'text-gray-500'}`}>
                                 <div className={`w-12 h-12 rounded-full border border-dashed ${currentTheme.isLight ? 'border-slate-300' : 'border-gray-800'} flex items-center justify-center`}>
-                                    <i data-lucide="message-square" className={`w-6 h-6 ${currentTheme.isLight ? 'text-slate-700' : 'text-gray-800'}`}></i>
+                                    <Icon name="message-square" className={`w-6 h-6 ${currentTheme.isLight ? 'text-slate-700' : 'text-gray-800'}`} />
                                 </div>
                                 <p className="text-xs">No secure signals detected yet.<br />Send a message to ignite this chat.</p>
                             </div>
@@ -1258,13 +1581,17 @@
                             messages.map((msg) => {
                                 const isSelf = msg.senderId === myUserId;
                                 let gifPayload = null;
+                                let imagePayload = null;
                                 try {
                                     const parsed = JSON.parse(msg.content);
                                     if (parsed?.type === "gif" && parsed?.url) {
                                         gifPayload = parsed;
+                                    } else if (parsed?.type === "image" && parsed?.url) {
+                                        imagePayload = parsed;
                                     }
                                 } catch (err) {
                                     gifPayload = null;
+                                    imagePayload = null;
                                 }
 
                                 return (
@@ -1281,7 +1608,7 @@
                                             </span>
                                             {/* Clock countdown metrics */}
                                             <span className="text-[10px] text-rose-400 font-semibold flex items-center gap-0.5">
-                                                <i data-lucide="hourglass" className="w-2.5 h-2.5"></i>
+                                                <Icon name="hourglass" className="w-2.5 h-2.5" />
                                                 {expiringList[msg.id] || "0:00"}
                                             </span>
                                         </div>
@@ -1290,6 +1617,12 @@
                                                 <img 
                                                     src={gifPayload.url} 
                                                     alt={gifPayload.title || 'GIF'}
+                                                    className="w-full max-w-[18rem] rounded-2xl object-cover"
+                                                />
+                                            ) : imagePayload ? (
+                                                <img
+                                                    src={imagePayload.url}
+                                                    alt={imagePayload.name || 'Shared image'}
                                                     className="w-full max-w-[18rem] rounded-2xl object-cover"
                                                 />
                                             ) : (
@@ -1333,19 +1666,43 @@
                                 className={`flex-1 ${currentTheme.inputBg} rounded-full px-4 py-3.5 ${currentTheme.isLight ? 'text-slate-900 placeholder-slate-500' : 'text-white placeholder-gray-500'} focus:outline-none focus:ring-1 text-sm transition-all`}
                             />
                             
+                            <input
+                                ref={imageInputRef}
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                className="hidden"
+                                onChange={handleImageSelect}
+                            />
+                            <button
+                                type="button"
+                                disabled={imageSending}
+                                onClick={() => imageInputRef.current?.click()}
+                                className={`w-11 h-11 ${currentTheme.cardBg} ${imageSending ? 'opacity-70 cursor-not-allowed' : 'active:scale-95'} rounded-full flex items-center justify-center ${currentTheme.isLight ? 'text-slate-900 border border-slate-300 hover:border-slate-400' : 'text-white border border-purple-900/20 hover:border-purple-500/40'} transition-all shadow-md`}
+                                title={imageSending ? "Uploading image..." : "Attach image"}
+                            >
+                                {imageSending ? (
+                                    <svg viewBox="0 0 24 24" className="w-4 h-4 animate-spin text-current" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                                        <path d="M22 12a10 10 0 0 1-10 10" />
+                                    </svg>
+                                ) : (
+                                    <Icon name="paperclip" className="w-4 h-4" />
+                                )}
+                            </button>
                             <button 
                                 type="button"
                                 onClick={() => setShowGifPicker((prev) => !prev)}
                                 className={`w-11 h-11 ${currentTheme.cardBg} active:scale-95 rounded-full flex items-center justify-center ${currentTheme.isLight ? 'text-slate-900 border border-slate-300 hover:border-slate-400' : 'text-white border border-purple-900/20 hover:border-purple-500/40'} transition-all shadow-md`}
                                 title="Search GIFs"
                             >
-                                <i data-lucide="image" className="w-4 h-4"></i>
+                                <Icon name="image" className="w-4 h-4" />
                             </button>
                             <button 
                                 type="submit"
                                 className={`w-11 h-11 ${currentTheme.accentBg} active:scale-95 rounded-full flex items-center justify-center text-white transition-all shadow-md cursor-pointer`}
                             >
-                                <i data-lucide="send" className="w-4 h-4 ml-0.5"></i>
+                                <Icon name="send" className="w-4 h-4 ml-0.5" />
                             </button>
                         </form>
                     </footer>
